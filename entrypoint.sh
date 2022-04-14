@@ -12,7 +12,6 @@ usage_docs() {
   echo "    workflow_file_name: main.yaml"
 }
 GITHUB_API_URL="${API_URL:-https://api.github.com}"
-GITHUB_SERVER_URL="${SERVER_URL:-https://github.com}"
 
 validate_args() {
   wait_interval=10 # Waits for 10 seconds
@@ -39,11 +38,7 @@ validate_args() {
     wait_workflow=${INPUT_WAIT_WORKFLOW}
   fi
 
-  last_workflow_interval=0
-  if [ -n "${INPUT_LAST_WORKFLOW_INTERVAL}" ]
-  then
-    last_workflow_interval=${INPUT_LAST_WORKFLOW_INTERVAL}
-  fi
+
 
   if [ -z "${INPUT_OWNER}" ]
   then
@@ -110,7 +105,7 @@ api() {
 get_workflow_runs() {
   since=${1:?}
 
-  query="event=workflow_dispatch&created=>=$since${INPUT_GITHUB_USER+&actor=}${INPUT_GITHUB_USER}&per_page=100"
+  query="per_page=100created=>=$since"
 
   echo "Getting workflow runs using query: ${query}" >&2
 
@@ -121,7 +116,7 @@ get_workflow_runs() {
 
 trigger_workflow() {
   START_TIME=$(date +%s)
-  SINCE=$(date -u -Iseconds -d "@$((START_TIME - 120))") # Two minutes ago, to overcome clock skew
+  SINCE=$(date -u -Iseconds -d "@$((START_TIME - 86400))") # 24 hours ago, to overcome clock skew
 
   OLD_RUNS=$(get_workflow_runs "$SINCE")
 
@@ -146,7 +141,7 @@ trigger_workflow() {
 
 wait_for_workflow_to_finish() {
   last_workflow_id=${1:?}
-  last_workflow_url="${GITHUB_SERVER_URL}/${INPUT_OWNER}/${INPUT_REPO}/actions/runs/${last_workflow_id}"
+  last_workflow_url="${GITHUB_API_URL}/repos/${INPUT_OWNER}/${INPUT_REPO}/actions/runs/${last_workflow_id}"
 
   echo "Waiting for workflow to finish:"
   echo "The workflow id is [${last_workflow_id}]."

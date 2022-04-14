@@ -6,24 +6,21 @@ Github Action for trigger a workflow from another workflow. The action then wait
 
 When deploying an app you may need to deploy additional services, this Github Action helps with that.
 
-
 ## Arguments
 
-| Argument Name            | Required   | Default     | Description           |
-| ---------------------    | ---------- | ----------- | --------------------- |
-| `owner`                  | True       | N/A         | The owner of the repository where the workflow is contained. |
-| `repo`                   | True       | N/A         | The repository where the workflow is contained. |
-| `github_token`           | True       | N/A         | The Github access token with access to the repository. Its recommended you put it under secrets. |
-| `workflow_file_name`     | True       | N/A         | The reference point. For example, you could use main.yml. |
-| `github_user`            | False      | N/A         | The name of the github user whose access token is being used to trigger the workflow. |
-| `ref`                    | False      | main        | The reference of the workflow run. The reference can be a branch, tag, or a commit SHA. |
-| `wait_interval`          | False      | 10          | The number of seconds delay between checking for result of run. |
-| `client_payload`         | False      | `{}`        | Payload to pass to the workflow, must be a JSON string |
-| `propagate_failure`      | False      | `true`      | Fail current job if downstream job fails. |
-| `trigger_workflow`       | False      | `true`      | Trigger the specified workflow. |
-| `wait_workflow`          | False      | `true`      | Wait for workflow to finish. |
-| `last_workflow_interval` | False      | 0           | The number of seconds delay between checking for the last workflow. default: 0 |
-
+| Argument Name        | Required | Default | Description                                                                                      |
+| -------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------ |
+| `owner`              | True     | N/A     | The owner of the repository where the workflow is contained.                                     |
+| `repo`               | True     | N/A     | The repository where the workflow is contained.                                                  |
+| `github_token`       | True     | N/A     | The Github access token with access to the repository. Its recommended you put it under secrets. |
+| `workflow_file_name` | True     | N/A     | The reference point. For example, you could use main.yml.                                        |
+| `github_user`        | False    | N/A     | The name of the github user whose access token is being used to trigger the workflow.            |
+| `ref`                | False    | main    | The reference of the workflow run. The reference can be a branch, tag, or a commit SHA.          |
+| `wait_interval`      | False    | 10      | The number of seconds delay between checking for result of run.                                  |
+| `client_payload`     | False    | `{}`    | Payload to pass to the workflow, must be a JSON string                                           |
+| `propagate_failure`  | False    | `true`  | Fail current job if downstream job fails.                                                        |
+| `trigger_workflow`   | False    | `true`  | Trigger the specified workflow.                                                                  |
+| `wait_workflow`      | False    | `true`  | Wait for workflow to finish.                                                                     |
 
 ## Example
 
@@ -49,17 +46,19 @@ When deploying an app you may need to deploy additional services, this Github Ac
     workflow_file_name: main.yml
     ref: release-branch
     wait_interval: 10
-    client_payload: '{}'
+    client_payload: "{}"
     propagate_failure: false
     trigger_workflow: true
     wait_workflow: true
-    last_workflow_interval: 1
 ```
-
 
 ## Testing
 
-You can test out the action locally by cloning the repository to your computer. You can run:
+You can test out the action locally by cloning the repository to your computer.
+
+### Run with busybox:
+
+You can run:
 
 ```shell
 INPUT_WAIT_INTERVAL=10 \
@@ -68,13 +67,40 @@ INPUT_WAIT_INTERVAL=10 \
   INPUT_WORKFLOW_FILE_NAME="main.yml" \
   INPUT_GITHUB_USER="github-user" \
   INPUT_WAIT_WORKFLOW=true \
-  INPUT_LAST_WORKFLOW_INTERVAL=1 \
   INPUT_OWNER="keithconvictional" \
   INPUT_REPO="trigger-workflow-and-wait-example-repo1" \
   INPUT_GITHUB_TOKEN="<REDACTED>" \
   INPUT_CLIENT_PAYLOAD='{}' \
   busybox sh entrypoint.sh
 ```
+
+### Run with docker:
+
+```shell
+docker build -t trigger .
+```
+
+create a .env with the following:
+
+```text
+INPUT_PROPAGATE_FAILURE=false
+INPUT_TRIGGER_WORKFLOW=true
+INPUT_WORKFLOW_FILE_NAME=main.yml
+INPUT_GITHUB_USER=taho2509
+INPUT_WAIT_WORKFLOW=true
+INPUT_OWNER=taho2509
+INPUT_REPO=trigger-workflow-and-wait-example-repo1
+INPUT_GITHUB_TOKEN=<REDACTED>
+INPUT_CLIENT_PAYLOAD={ }
+```
+
+and go with:
+
+```shell
+docker run --rm --env-file=.env trigger sh
+```
+
+## Remote job
 
 You will have to create a Github Personal access token. You can create a test workflow to be executed. In a repository, add a new `main.yml` to `.github/workflows/`. The workflow will be:
 
@@ -95,7 +121,7 @@ jobs:
 You can see the example [here](https://github.com/keithconvictional/trigger-workflow-and-wait-example-repo1/blob/master/.github/workflows/main.yml). For testing a failure case, just add this line after the sleep:
 
 ```yaml
-...
+---
 - name: Pause for 25 seconds
   run: |
     sleep 25
